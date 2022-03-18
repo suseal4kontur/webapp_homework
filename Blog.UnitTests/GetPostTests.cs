@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 using Blog.Exceptions;
 using Blog.Models;
 using FluentAssertions;
@@ -17,6 +18,7 @@ namespace Blog.UnitTests
         {
             this.firstBlogRepository = new BlogRepository();
             this.secondBlogRepository = new BlogRepository();
+            ((BlogRepository)firstBlogRepository).DeleteAllPostsAsync(default).GetAwaiter().GetResult();
         }
 
         [Test]
@@ -32,15 +34,20 @@ namespace Blog.UnitTests
 
             var actual = this.secondBlogRepository.GetPostAsync(expected.Id, default).Result;
 
-            actual.Should().BeEquivalentTo(expected);
+            actual.Id.Should().Be(expected.Id);
+            actual.Title.Should().Be(expected.Title);
+            actual.Text.Should().Be(expected.Text);
+            actual.Tags.Should().BeEquivalentTo(expected.Tags);
+            actual.CreatedAt.Should().BeWithin(TimeSpan.FromMilliseconds(100)).Before(expected.CreatedAt);
+            ((BlogRepository)firstBlogRepository).DeleteAllPostsAsync(default).GetAwaiter().GetResult();
         }
 
         [Test]
-        public void ThrowPostNotFoundException_WhenPostNotFound()
+        public async Task ThrowPostNotFoundException_WhenPostNotFound()
         {
-            Action action = () => this.firstBlogRepository.GetPostAsync(Guid.NewGuid().ToString(), default);
+            Func<Task> action = () => this.firstBlogRepository.GetPostAsync(Guid.NewGuid().ToString(), default);
 
-            action.Should().Throw<PostNotFoundException>();
+            await action.Should().ThrowAsync<PostNotFoundException>();
         }
     }
 }

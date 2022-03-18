@@ -14,6 +14,7 @@ namespace Blog.UnitTests
         public void SetUp()
         {
             this.blogRepository = new BlogRepository();
+            ((BlogRepository)blogRepository).DeleteAllPostsAsync(default).GetAwaiter().GetResult();
         }
 
         [Test]
@@ -34,6 +35,7 @@ namespace Blog.UnitTests
             post.Tags.Should().BeEquivalentTo(createInfo.Tags);
             post.Comments.Should().BeNull();
             post.CreatedAt.Should().BeWithin(TimeSpan.FromSeconds(1)).Before(DateTime.UtcNow);
+            ((BlogRepository)blogRepository).DeleteAllPostsAsync(default).GetAwaiter().GetResult();
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 using Blog.Exceptions;
 using Blog.Models;
 using FluentAssertions;
@@ -15,6 +16,7 @@ namespace Blog.UnitTests
         public void SetUp()
         {
             this.blogRepository = new BlogRepository();
+            ((BlogRepository)blogRepository).DeleteAllPostsAsync(default).GetAwaiter().GetResult();
         }
 
         [Test]
@@ -36,6 +38,7 @@ namespace Blog.UnitTests
             updatedPost.Text.Should().Be(updateInfo.Text);
             updatedPost.Tags.Should().BeEquivalentTo(post.Tags);
             updatedPost.CreatedAt.Should().BeWithin(TimeSpan.FromMilliseconds(100)).Before(post.CreatedAt);
+            ((BlogRepository)blogRepository).DeleteAllPostsAsync(default).GetAwaiter().GetResult();
         }
 
         [Test]
@@ -62,15 +65,17 @@ namespace Blog.UnitTests
             updatedPost.Text.Should().Be(updateInfo.Text);
             updatedPost.Tags.Should().BeEquivalentTo(updateInfo.Tags);
             updatedPost.CreatedAt.Should().BeWithin(TimeSpan.FromMilliseconds(100)).Before(post.CreatedAt);
+            ((BlogRepository)blogRepository).DeleteAllPostsAsync(default).GetAwaiter().GetResult();
         }
 
         [Test]
         public void ThrowPostNotFoundException_WhenPostNotFound()
         {
-            Action action = () =>
-                this.blogRepository.UpdatePostAsync(Guid.NewGuid().ToString(), new PostUpdateInfo(), default);
+            var updateInfo = new PostUpdateInfo { Title = "другой заголовок" };
+            Func<Task> action = async () =>
+                await this.blogRepository.UpdatePostAsync(Guid.NewGuid().ToString(), updateInfo, default);
 
-            action.Should().Throw<PostNotFoundException>();
+            action.Should().ThrowAsync<PostNotFoundException>();
         }
     }
 }
